@@ -9,7 +9,8 @@ const nextConfig = {
   },
   ...(process.env.DOCKER_BUILD === "true" ? { output: "standalone" } : {}),
   async rewrites() {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const rawUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const backendUrl = rawUrl.trim().replace(/\/+$/, "");
     return [
       {
         source: "/api/:path*",
@@ -17,6 +18,7 @@ const nextConfig = {
       },
     ];
   },
+
 };
 
 export default nextConfig;
