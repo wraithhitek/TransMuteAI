@@ -105,9 +105,21 @@ export interface TaskStatusResponse {
   error?: string;
 }
 
+async function parseApiError(res: Response, fallback: string): Promise<string> {
+  if (res.status === 404) {
+    return `Backend API endpoint not found (404). If deployed on Vercel, ensure NEXT_PUBLIC_API_URL is set in Vercel Environment Variables to your Render backend URL.`;
+  }
+  try {
+    const data = await res.json();
+    return data.detail || data.message || fallback;
+  } catch {
+    return `${fallback} (HTTP ${res.status})`;
+  }
+}
+
 export async function fetchSystemStatus() {
   const res = await fetch(`${API_BASE_URL}/api/status`);
-  if (!res.ok) throw new Error("Failed to fetch system status");
+  if (!res.ok) throw new Error(await parseApiError(res, "Failed to fetch system status"));
   return res.json();
 }
 
@@ -121,8 +133,7 @@ export async function ingestDocument(file: File): Promise<IngestionResponse> {
   });
 
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.detail || "Failed to parse document");
+    throw new Error(await parseApiError(res, "Failed to parse document"));
   }
 
   return res.json();
@@ -141,12 +152,12 @@ export async function generateBrief(
   });
 
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.detail || "Failed to generate Content Brief");
+    throw new Error(await parseApiError(res, "Failed to generate Content Brief"));
   }
 
   return res.json();
 }
+
 
 export async function triggerTransformation(
   brief: ContentBriefJSON,
