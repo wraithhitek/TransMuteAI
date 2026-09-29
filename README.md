@@ -14,7 +14,7 @@
 
 | Deliverable | Description | Location / Link |
 | :--- | :--- | :--- |
-| **1. Source Code Repository** | Full production repository (Backend, Frontend, Workers, Tests) | Current Workspace / [GitHub Link](https://github.com/your-username/TransMuteAI) |
+| **1. Source Code Repository** | Full production repository (Backend, Frontend, Workers, Tests) | Current Workspace / [GitHub Link](https://github.com/wraithhitek/TransMuteAI) |
 | **2. Setup Instructions** | Step-by-step local development & Docker instructions | See [Local Setup Guide](#-local-development-setup) below |
 | **3. Architecture Document** | Max 2-page formal technical specification with topology & guarantees | [`ARCHITECTURE.md`](file:///c:/Users/user/Desktop/TransMuteAI/ARCHITECTURE.md) |
 | **4. Demo Video Script** | Max 2-minute timed script and screen recording walkthrough | [`DEMO_GUIDE.md`](file:///c:/Users/user/Desktop/TransMuteAI/DEMO_GUIDE.md) |
