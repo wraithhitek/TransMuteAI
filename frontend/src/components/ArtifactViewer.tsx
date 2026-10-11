@@ -23,7 +23,9 @@ import {
   Sparkles,
   Layers,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  X,
+  FileDown
 } from "lucide-react";
 import { TaskStatusResponse, API_BASE_URL } from "../lib/api";
 
@@ -34,19 +36,22 @@ interface ArtifactViewerProps {
 
 export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({ task, onOpenLedger }) => {
   const [copiedHash, setCopiedHash] = useState(false);
-  const [expandedPreview, setExpandedPreview] = useState<string | null>(null);
+  const [copiedNotification, setCopiedNotification] = useState<string | null>(null);
+  const [previewArtifact, setPreviewArtifact] = useState<string | null>(null);
 
   const blockHash = task.ledger_entry?.block_hash || "";
   const briefId = task.ledger_entry?.brief_id || "";
 
+  const showToast = (msg: string) => {
+    setCopiedNotification(msg);
+    setTimeout(() => setCopiedNotification(null), 2500);
+  };
+
   const copyHash = (hash: string) => {
     navigator.clipboard.writeText(hash);
     setCopiedHash(true);
+    showToast("Cryptographic SHA-256 block hash copied!");
     setTimeout(() => setCopiedHash(false), 2000);
-  };
-
-  const togglePreview = (key: string) => {
-    setExpandedPreview(prev => (prev === key ? null : key));
   };
 
   const DELIVERABLES_CONFIG = [
@@ -164,7 +169,15 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({ task, onOpenLedg
   );
 
   return (
-    <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 shadow-2xl backdrop-blur-md space-y-6">
+    <div className="glass-panel-elevated rounded-2xl p-6 sm:p-7 shadow-2xl backdrop-blur-xl space-y-6 relative transition-all">
+      {/* Toast Notification */}
+      {copiedNotification && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-slate-900 border border-emerald-500/40 text-white text-xs font-semibold shadow-2xl shadow-emerald-500/20 animate-bounce">
+          <Check className="h-4 w-4 text-emerald-400" />
+          <span>{copiedNotification}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-800">
         <div>
@@ -174,16 +187,16 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({ task, onOpenLedg
             </span>
             <h2 className="text-xl font-bold text-white tracking-tight">Generated Deliverables & Cryptographic Provenance</h2>
           </div>
-          <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-            All requested deliverables generated simultaneously from the canonical brief with <strong>100% semantic alignment</strong> and sealed on the blockchain ledger.
+          <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+            All requested deliverables synthesized simultaneously from the canonical brief with <strong>100% semantic alignment</strong> and sealed on the blockchain ledger.
           </p>
         </div>
 
         {/* Status Pill */}
         <div className="flex items-center gap-2">
           {task.status === "COMPLETED" ? (
-            <span className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-semibold shadow-sm">
-              <CheckCircle className="h-4 w-4" />
+            <span className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold shadow-sm">
+              <CheckCircle className="h-4 w-4 text-emerald-400" />
               <span>Provenance Sealed ({generatedArtifacts.length} Deliverables)</span>
             </span>
           ) : (
@@ -218,17 +231,16 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({ task, onOpenLedg
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {generatedArtifacts.map((d) => {
           const Icon = d.icon;
-          const isExpanded = expandedPreview === d.key;
 
           return (
             <div
               key={d.key}
-              className={`p-5 rounded-2xl bg-slate-950/80 border ${d.border} ${d.hoverBorder} flex flex-col justify-between transition-all shadow-md hover:shadow-xl`}
+              className={`p-5 rounded-2xl bg-slate-950/80 border ${d.border} ${d.hoverBorder} flex flex-col justify-between transition-all shadow-md hover:shadow-xl group`}
             >
               <div className="space-y-3">
                 {/* Header row */}
                 <div className="flex items-center justify-between">
-                  <div className={`h-11 w-11 rounded-xl ${d.bg} ${d.color} flex items-center justify-center border border-white/5 shadow-inner`}>
+                  <div className={`h-11 w-11 rounded-xl ${d.bg} ${d.color} flex items-center justify-center border border-white/5 shadow-inner group-hover:scale-105 transition-transform`}>
                     <Icon className="h-5 w-5" />
                   </div>
                   <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-md bg-slate-900 text-slate-300 border border-slate-800">
@@ -237,7 +249,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({ task, onOpenLedg
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-bold text-white">{d.title}</h3>
+                  <h3 className="text-sm font-bold text-white group-hover:text-blue-300 transition-colors">{d.title}</h3>
                   <p className="text-xs text-slate-400 mt-1 leading-relaxed">{d.desc}</p>
                 </div>
 
@@ -288,13 +300,13 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({ task, onOpenLedg
         <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-slate-900 border border-slate-800 flex flex-col lg:flex-row items-center justify-between gap-6 shadow-xl">
           <div className="flex-1 space-y-3">
             <div className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+              <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20 shadow-inner">
                 <ShieldCheck className="h-5 w-5" />
               </div>
               <div>
                 <h4 className="text-sm font-bold text-white flex items-center gap-2">
                   <span>Cryptographic Ledger Block #{task.ledger_entry.index}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono font-bold">
+                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono font-bold">
                     Immutable & Sealed
                   </span>
                 </h4>
@@ -306,7 +318,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({ task, onOpenLedg
 
             {/* Block Hash details */}
             <div className="space-y-2 pt-1">
-              <div className="flex items-center gap-2 bg-slate-900/90 px-3.5 py-2 rounded-xl border border-slate-800 font-mono text-[11px] text-slate-300 max-w-xl">
+              <div className="flex items-center gap-2 bg-slate-900/90 px-3.5 py-2.5 rounded-xl border border-slate-800 font-mono text-[11px] text-slate-300 max-w-xl">
                 <span className="text-slate-500 shrink-0 font-bold">SHA-256 Hash:</span>
                 <span className="truncate text-emerald-400">{blockHash}</span>
                 <button
@@ -321,7 +333,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({ task, onOpenLedg
               <div className="flex flex-wrap items-center gap-3 pt-1">
                 <button
                   onClick={onOpenLedger}
-                  className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 font-semibold px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 transition-all"
+                  className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 font-semibold px-3.5 py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 transition-all shadow-sm"
                 >
                   <span>Open Blockchain Explorer</span>
                   <ExternalLink className="h-3.5 w-3.5" />
@@ -330,7 +342,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({ task, onOpenLedg
                 <a
                   href={`${API_BASE_URL}/api/artifacts/${briefId}/download/qr`}
                   download="transmuteai_verification_qr.png"
-                  className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white font-medium px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white font-medium px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors"
                 >
                   <Download className="h-3.5 w-3.5" />
                   <span>Download QR Verification Badge</span>
@@ -340,7 +352,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({ task, onOpenLedg
           </div>
 
           {/* QR Code Container */}
-          <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white text-slate-950 shadow-xl shrink-0 ring-4 ring-slate-800/60">
+          <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white text-slate-950 shadow-2xl shrink-0 ring-4 ring-slate-800/60">
             <img
               src={`${API_BASE_URL}/api/artifacts/${briefId}/download/qr`}
               alt="Cryptographic Verification QR Code"

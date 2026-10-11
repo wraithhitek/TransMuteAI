@@ -45,18 +45,23 @@ export default function Home() {
   };
 
   // Step 2: Generate Content Brief JSON
-  const handleGenerateBrief = async (rawText: string, title: string) => {
+  const handleGenerateBrief = async (rawText: string, title: string, tone: string = "authoritative") => {
     try {
       setIsGeneratingBrief(true);
-      const res = await generateBrief(rawText, title);
+      const res = await generateBrief(rawText, title, tone);
       setBrief(res);
       setTask(null);
+      // Smooth scroll to step 2
+      setTimeout(() => {
+        document.getElementById("step-2-brief")?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
     } catch (e: any) {
       alert("Error generating brief: " + e.message);
     } finally {
       setIsGeneratingBrief(false);
     }
   };
+
 
   // Step 3: Trigger Multi-Format Transformation
   const handleTransform = async (briefData: ContentBriefJSON, formats: string[]) => {
@@ -190,21 +195,26 @@ export default function Home() {
 
         {/* Step 2: Canonical Content Brief JSON Inspector */}
         {brief && (
-          <ContentBriefInspector
-            brief={brief}
-            onTransform={handleTransform}
-            isTransforming={isTransforming}
-          />
+          <div id="step-2-brief" className="scroll-mt-20">
+            <ContentBriefInspector
+              brief={brief}
+              onTransform={handleTransform}
+              isTransforming={isTransforming}
+            />
+          </div>
         )}
 
         {/* Step 3: Multi-Format Deliverables Hub & Blockchain Provenance */}
         {task && (
-          <ArtifactViewer
-            task={task}
-            onOpenLedger={() => setIsLedgerOpen(true)}
-          />
+          <div id="step-3-artifacts" className="scroll-mt-20">
+            <ArtifactViewer
+              task={task}
+              onOpenLedger={() => setIsLedgerOpen(true)}
+            />
+          </div>
         )}
       </main>
+
 
       {/* Blockchain Ledger Explorer Modal */}
       <ProvenanceModal

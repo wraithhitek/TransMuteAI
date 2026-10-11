@@ -27,7 +27,9 @@ import {
   AlertTriangle,
   Eye,
   Sliders,
-  ExternalLink
+  ExternalLink,
+  ChevronRight,
+  Play
 } from "lucide-react";
 import { ContentBriefJSON } from "../lib/api";
 
@@ -52,11 +54,13 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
     "executive_summary",
     "presentation"
   ]);
-  const [copiedJson, setCopiedJson] = useState(false);
-  const [copiedPost, setCopiedPost] = useState(false);
-  const [copiedThread, setCopiedThread] = useState(false);
-  const [copiedSrt, setCopiedSrt] = useState(false);
+  const [copiedNotification, setCopiedNotification] = useState<string | null>(null);
   const [copiedHex, setCopiedHex] = useState<string | null>(null);
+
+  const showToast = (message: string) => {
+    setCopiedNotification(message);
+    setTimeout(() => setCopiedNotification(null), 2400);
+  };
 
   const toggleFormat = (fmt: string) => {
     setSelectedFormats(prev =>
@@ -74,44 +78,41 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
 
   const copyJson = () => {
     navigator.clipboard.writeText(JSON.stringify(brief, null, 2));
-    setCopiedJson(true);
-    setTimeout(() => setCopiedJson(false), 2000);
+    showToast("Canonical Content Brief JSON copied to clipboard!");
   };
 
   const copyLinkedIn = () => {
     if (!brief.linkedin_post) return;
     const post = `${brief.linkedin_post.hook}\n\n${brief.linkedin_post.body}\n\n${(brief.linkedin_post.bullet_insights || []).map(b => `• ${b}`).join("\n")}\n\n${brief.linkedin_post.call_to_action}\n\n${(brief.linkedin_post.hashtags || []).map(h => `#${h.replace(/^#/, "")}`).join(" ")}`;
     navigator.clipboard.writeText(post);
-    setCopiedPost(true);
-    setTimeout(() => setCopiedPost(false), 2000);
+    showToast("LinkedIn post formatted and copied to clipboard!");
   };
 
   const copyTwitter = () => {
     if (!brief.social_media_thread) return;
     const thread = brief.social_media_thread.map(t => `${t.post_number}/${brief.social_media_thread.length}\n${t.content}\n${(t.hashtags || []).map(h => `#${h.replace(/^#/, "")}`).join(" ")}`).join("\n\n---\n\n");
     navigator.clipboard.writeText(thread);
-    setCopiedThread(true);
-    setTimeout(() => setCopiedThread(false), 2000);
+    showToast(`Full Twitter/X thread (${brief.social_media_thread.length} tweets) copied!`);
   };
 
   const copySrt = () => {
     if (!brief.video_package?.subtitles_srt) return;
     navigator.clipboard.writeText(brief.video_package.subtitles_srt);
-    setCopiedSrt(true);
-    setTimeout(() => setCopiedSrt(false), 2000);
+    showToast("Broadcast SubRip (.SRT) subtitles copied to clipboard!");
   };
 
   const copyHexCode = (hex: string) => {
     navigator.clipboard.writeText(hex);
     setCopiedHex(hex);
+    showToast(`Color hex code ${hex} copied to clipboard!`);
     setTimeout(() => setCopiedHex(null), 2000);
   };
 
   const FORMAT_SPECIFICATIONS = [
     {
       id: "video",
-      title: "Video Package",
-      subtitle: "Complete Production Package",
+      title: "Video Production Package",
+      subtitle: "Director Storyboard & Screenplay",
       badge: "Script • Storyboard • Narration • Subtitles • Visuals",
       icon: Video,
       color: "text-purple-400",
@@ -121,8 +122,8 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
     },
     {
       id: "linkedin",
-      title: "LinkedIn Post",
-      subtitle: "Professional Thought Leadership",
+      title: "Professional LinkedIn Post",
+      subtitle: "Executive Thought Leadership",
       badge: "Curiosity Hook • Bullets • CTA • Hashtags",
       icon: Share2,
       color: "text-blue-400",
@@ -132,9 +133,9 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
     },
     {
       id: "twitter",
-      title: "Twitter/X Post",
-      subtitle: "Platform-Optimized Viral Thread",
-      badge: "1/N Thread • Viral Hook • Takeaways • CTA",
+      title: "Twitter/X Viral Thread",
+      subtitle: "Platform-Optimized Thread (1/N)",
+      badge: "1/N Thread • Hook • Takeaways • CTA",
       icon: Twitter,
       color: "text-sky-400",
       accentBorder: "border-sky-500/40",
@@ -143,8 +144,8 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
     },
     {
       id: "advisory",
-      title: "Advisory Document",
-      subtitle: "Structured Strategic Memo",
+      title: "Strategic Advisory Memo",
+      subtitle: "McKinsey/Bain Executive Document",
       badge: "Mandate • Risk Matrix • 30-60-90d Roadmap",
       icon: FileCheck,
       color: "text-emerald-400",
@@ -154,8 +155,8 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
     },
     {
       id: "infographic",
-      title: "Infographic",
-      subtitle: "Visual Blueprint & Messaging",
+      title: "Infographic Visual Blueprint",
+      subtitle: "Story Canvas & Hex Guidelines",
       badge: "Narrative Flow • Palette • 4 Hero Stats • HTML",
       icon: PieChart,
       color: "text-cyan-400",
@@ -165,8 +166,8 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
     },
     {
       id: "executive_summary",
-      title: "Executive Summary",
-      subtitle: "Concise Executive Briefing",
+      title: "Executive Summary Briefing",
+      subtitle: "Concise C-Suite Briefing Memo",
       badge: "Headline • Context • Findings • Directives",
       icon: Layers,
       color: "text-indigo-400",
@@ -176,9 +177,9 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
     },
     {
       id: "presentation",
-      title: "Presentation",
-      subtitle: "Slide Deck & Speaker Notes",
-      badge: "16:9 Widescreen • Bullets • Speaker Notes",
+      title: "Presentation Slide Deck",
+      subtitle: "16:9 Widescreen Slides & Notes",
+      badge: "16:9 Slides • Structured Bullets • Speaker Notes",
       icon: Presentation,
       color: "text-orange-400",
       accentBorder: "border-orange-500/40",
@@ -188,7 +189,15 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
   ];
 
   return (
-    <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 shadow-2xl backdrop-blur-md space-y-6">
+    <div className="glass-panel-elevated rounded-2xl p-6 sm:p-7 shadow-2xl backdrop-blur-xl space-y-6 relative transition-all">
+      {/* Toast Notification Floating Pill */}
+      {copiedNotification && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-slate-900 border border-blue-500/40 text-white text-xs font-semibold shadow-2xl shadow-blue-500/20 animate-bounce">
+          <Check className="h-4 w-4 text-emerald-400" />
+          <span>{copiedNotification}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-800">
         <div>
@@ -199,37 +208,38 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
             <h2 className="text-xl font-bold text-white tracking-tight">Canonical Content Brief JSON (Single Source of Truth)</h2>
           </div>
           <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
-            Standardized intermediate representation synthesized from sanitized input. Ensures <strong>100% semantic consistency</strong> across all downstream media channels.
+            Standardized intermediate schema synthesized from sanitized input. Ensures <strong>100% semantic consistency</strong> across all downstream media channels.
           </p>
         </div>
 
         {/* Metadata Badges */}
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs px-2.5 py-1 rounded-lg bg-slate-950 text-slate-300 font-mono border border-slate-800">
+          <span className="text-xs px-2.5 py-1 rounded-xl bg-slate-950 text-slate-300 font-mono border border-slate-800">
             ID: {brief.brief_id.substring(0, 16)}...
           </span>
-          <span className="text-xs px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 font-semibold border border-blue-500/20 capitalize">
+          <span className="text-xs px-2.5 py-1 rounded-xl bg-blue-500/10 text-blue-400 font-semibold border border-blue-500/20 capitalize">
             Tone: {brief.tone}
           </span>
           {brief.entities_extracted && (
-            <span className="text-xs px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-300 font-mono border border-purple-500/20">
+            <span className="text-xs px-2.5 py-1 rounded-xl bg-purple-500/10 text-purple-300 font-mono border border-purple-500/20">
               {brief.entities_extracted.length} Entities Tracked
             </span>
           )}
           <button
             onClick={copyJson}
-            className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all shadow-sm font-medium"
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all shadow-sm font-medium"
           >
-            {copiedJson ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5 text-slate-400" />}
-            <span>{copiedJson ? "Copied JSON" : "Copy Brief JSON"}</span>
+            <Copy className="h-3.5 w-3.5 text-slate-400" />
+            <span>Copy Brief JSON</span>
           </button>
         </div>
       </div>
 
       {/* Interactive Tabs Bar */}
       <div>
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Preview Canonical Structure:</span>
+          <span className="text-[11px] text-slate-500 font-mono">Click any format to inspect preview</span>
         </div>
         <div className="flex items-center gap-1.5 border-b border-slate-800 pb-3 overflow-x-auto">
           {[
@@ -274,17 +284,17 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
         {/* 1. Video Package */}
         {activeTab === "video" && (
           <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-slate-950/70 border border-purple-500/20 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="p-5 rounded-2xl bg-gradient-to-r from-purple-950/30 via-slate-950/80 to-slate-950/80 border border-purple-500/25 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
                     <Video className="h-4 w-4" /> Concept Treatment & Narrative Flow
                   </span>
-                  <span className="text-[10px] font-mono text-purple-300 px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20">
-                    Target Duration: {brief.video_package?.target_duration || "60-90s"}
+                  <span className="text-[10px] font-mono text-purple-300 px-2.5 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/25">
+                    Duration: {brief.video_package?.target_duration || "60-90s"}
                   </span>
                 </div>
-                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
                   {brief.video_package?.concept || "Comprehensive broadcast screenplay designed for maximum audience retention with synced subtitles and visual directives."}
                 </p>
               </div>
@@ -292,23 +302,26 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
               {brief.video_package?.subtitles_srt && (
                 <button
                   onClick={copySrt}
-                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 font-medium shrink-0 transition-colors"
+                  className="flex items-center gap-1.5 text-xs px-3.5 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 font-medium shrink-0 transition-colors shadow-sm"
                 >
-                  {copiedSrt ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                  <span>{copiedSrt ? "SRT Copied" : "Copy Subtitles (.SRT)"}</span>
+                  <Copy className="h-3.5 w-3.5" />
+                  <span>Copy Subtitles (.SRT)</span>
                 </button>
               )}
             </div>
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Scene-by-Scene Storyboard & Teleprompter</h4>
+                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Play className="h-3.5 w-3.5 text-purple-400" />
+                  <span>Scene-by-Scene Storyboard & Teleprompter</span>
+                </h4>
                 <span className="text-[11px] text-slate-500 font-mono">{brief.video_package?.storyboard?.length || 0} Scenes Total</span>
               </div>
 
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-1 gap-3.5">
                 {brief.video_package?.storyboard?.map((scene) => (
-                  <div key={scene.scene_number} className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3 hover:border-purple-500/30 transition-all">
+                  <div key={scene.scene_number} className="p-4 sm:p-5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3 hover:border-purple-500/30 transition-all shadow-sm">
                     <div className="flex items-center justify-between text-xs pb-2 border-b border-slate-800/80">
                       <div className="flex items-center gap-2">
                         <span className="h-6 w-6 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold font-mono text-[11px]">
@@ -316,25 +329,23 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
                         </span>
                         <span className="font-bold text-white">Scene {scene.scene_number}</span>
                       </div>
-                      <span className="text-purple-300 font-mono text-xs flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-purple-500/10 border border-purple-500/20">
+                      <span className="text-purple-300 font-mono text-xs flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20">
                         <Clock className="h-3.5 w-3.5 text-purple-400" /> {scene.timestamp}
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
                       {/* Visual Framing */}
-                      <div className="p-3 rounded-lg bg-slate-900/90 border border-slate-800 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] text-purple-400 uppercase font-bold flex items-center gap-1">
-                            🎥 Visual & Camera Direction
-                          </span>
-                        </div>
+                      <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800/90 space-y-2">
+                        <span className="text-[10px] text-purple-400 uppercase font-bold flex items-center gap-1">
+                          🎥 Visual Cinematography & Camera Direction
+                        </span>
                         <p className="text-slate-300 leading-relaxed">{scene.visual_description}</p>
                         {scene.b_roll_recommendations && scene.b_roll_recommendations.length > 0 && (
                           <div className="pt-1 flex flex-wrap gap-1.5">
                             <span className="text-[10px] text-slate-400 font-medium mr-1">B-Roll:</span>
                             {scene.b_roll_recommendations.map((b, i) => (
-                              <span key={i} className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-mono">
+                              <span key={i} className="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700 font-mono">
                                 🎞️ {b}
                               </span>
                             ))}
@@ -342,17 +353,21 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
                         )}
                       </div>
 
-                      {/* Narration Script */}
-                      <div className="p-3 rounded-lg bg-slate-900/90 border border-slate-800 space-y-2">
+                      {/* Narration Script with Audio Waveform */}
+                      <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800/90 space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] text-emerald-400 uppercase font-bold flex items-center gap-1">
                             🎙️ Narration Script (Voiceover)
                           </span>
-                          <span className="text-[10px] text-slate-500 font-mono flex items-center gap-1">
-                            <Volume2 className="h-3 w-3 text-emerald-400" /> {scene.narration.split(" ").length} words
-                          </span>
+                          {/* Audio Wave Visualizer Bars */}
+                          <div className="flex items-center gap-1 h-3.5 px-1.5">
+                            <span className="w-1 bg-emerald-400 rounded-full h-full wave-bar-1" />
+                            <span className="w-1 bg-emerald-400 rounded-full h-full wave-bar-2" />
+                            <span className="w-1 bg-emerald-400 rounded-full h-full wave-bar-3" />
+                            <span className="w-1 bg-emerald-400 rounded-full h-full wave-bar-4" />
+                          </div>
                         </div>
-                        <p className="text-slate-200 italic font-serif leading-relaxed text-sm bg-slate-950/60 p-2 rounded border border-slate-800/60">
+                        <p className="text-slate-200 italic font-serif leading-relaxed text-sm bg-slate-950/70 p-3 rounded-xl border border-slate-800/70">
                           "{scene.narration}"
                         </p>
                         <div className="text-[10px] text-slate-400 flex items-center gap-1 pt-1">
@@ -377,7 +392,7 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
                     onClick={copySrt}
                     className="text-[11px] text-purple-400 hover:text-purple-300 font-medium"
                   >
-                    {copiedSrt ? "Copied!" : "Copy Stream"}
+                    Copy Stream
                   </button>
                 </div>
                 <pre className="text-[11px] font-mono text-purple-300 overflow-x-auto max-h-36 p-3 rounded-lg bg-slate-900 border border-slate-800 leading-relaxed">
@@ -410,10 +425,10 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
 
                 <button
                   onClick={copyLinkedIn}
-                  className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 font-medium transition-colors"
+                  className="flex items-center gap-1 text-xs px-3.5 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 font-medium transition-colors"
                 >
-                  {copiedPost ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                  <span>{copiedPost ? "Copied" : "Copy Post"}</span>
+                  <Copy className="h-3.5 w-3.5" />
+                  <span>Copy Post</span>
                 </button>
               </div>
 
@@ -431,7 +446,7 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
 
                 {/* Bullet Insights */}
                 {brief.linkedin_post?.bullet_insights && (
-                  <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                  <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
                     <span className="text-[10px] uppercase font-bold text-blue-400 tracking-wider block">Key Executive Takeaways</span>
                     <ul className="space-y-2">
                       {brief.linkedin_post.bullet_insights.map((b, i) => (
@@ -491,10 +506,10 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
               <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Viral Tweet Sequence</span>
               <button
                 onClick={copyTwitter}
-                className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-sky-600/20 hover:bg-sky-600/30 text-sky-300 border border-sky-500/30 font-medium transition-colors"
+                className="flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-xl bg-sky-600/20 hover:bg-sky-600/30 text-sky-300 border border-sky-500/30 font-medium transition-colors"
               >
-                {copiedThread ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                <span>{copiedThread ? "Copied" : "Copy Full Thread"}</span>
+                <Copy className="h-3.5 w-3.5" />
+                <span>Copy Full Thread</span>
               </button>
             </div>
 
@@ -502,8 +517,8 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
               {/* Vertical connector line */}
               <div className="absolute left-2.5 top-5 bottom-5 w-0.5 bg-slate-800" />
 
-              {brief.social_media_thread?.map((post, idx) => (
-                <div key={post.post_number} className="relative p-4 rounded-xl bg-slate-950/90 border border-slate-800 space-y-2 hover:border-sky-500/40 transition-all">
+              {brief.social_media_thread?.map((post) => (
+                <div key={post.post_number} className="relative p-4 sm:p-5 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-2 hover:border-sky-500/40 transition-all shadow-sm">
                   {/* Thread Node Dot */}
                   <div className="absolute -left-[19px] top-5 h-3 w-3 rounded-full bg-sky-500 border-2 border-slate-950" />
 
@@ -521,7 +536,7 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
                       </div>
                     </div>
 
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">
                       {post.post_number}/{brief.social_media_thread.length}
                     </span>
                   </div>
@@ -545,9 +560,9 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
         {activeTab === "advisory" && (
           <div className="space-y-4">
             {/* Executive Mandate */}
-            <div className="p-5 rounded-xl bg-gradient-to-r from-emerald-950/40 via-slate-950/80 to-slate-950/80 border border-emerald-500/30 shadow-md">
+            <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-slate-950/80 to-slate-950/80 border border-emerald-500/30 shadow-md">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] font-mono uppercase font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="text-[10px] font-mono uppercase font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   Strategic Mandate
                 </span>
                 <span className="text-xs text-slate-400">Confidential Advisory Briefing</span>
@@ -558,7 +573,7 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
             </div>
 
             {/* Strategic Risk Assessment Matrix */}
-            <div className="p-5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
+            <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                   <AlertTriangle className="h-4 w-4 text-amber-400" /> Strategic Risk Assessment Matrix
@@ -607,7 +622,7 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
             </div>
 
             {/* Phased Roadmap */}
-            <div className="p-5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
+            <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                   <Calendar className="h-4 w-4 text-emerald-400" /> 30-60-90 Day Phased Implementation Roadmap
@@ -619,7 +634,7 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
                 {brief.advisory_document?.phased_roadmap?.map((p, i) => (
                   <div key={i} className="p-4 rounded-xl bg-slate-900/90 border border-slate-800/90 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-emerald-400 font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                      <span className="text-[10px] text-emerald-400 font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
                         {p.timeframe}
                       </span>
                       <span className="text-[10px] text-slate-500 font-mono">Phase {i + 1}</span>
@@ -643,7 +658,7 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
         {/* 5. Infographic */}
         {activeTab === "infographic" && (
           <div className="space-y-4">
-            <div className="p-5 rounded-xl bg-slate-950/80 border border-cyan-500/25 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="p-5 rounded-2xl bg-slate-950/80 border border-cyan-500/25 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="space-y-1">
                 <span className="text-[10px] text-cyan-400 uppercase font-mono font-bold tracking-wider">
                   Visual Infographic Blueprint
@@ -662,7 +677,7 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
                         key={i}
                         onClick={() => copyHexCode(c)}
                         title={`Click to copy ${c}`}
-                        className="h-8 px-2 rounded-lg flex items-center justify-center text-[10px] font-mono text-white border border-white/20 transition-transform hover:scale-105 active:scale-95 shadow-sm"
+                        className="h-8 px-2.5 rounded-lg flex items-center justify-center text-[10px] font-mono text-white border border-white/20 transition-transform hover:scale-105 active:scale-95 shadow-sm"
                         style={{ backgroundColor: c }}
                       >
                         {copiedHex === c ? "✓" : c}
@@ -676,7 +691,7 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
             {/* 4 Quadrants Stat Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {brief.infographic?.sections?.map((sec, idx) => (
-                <div key={idx} className="p-5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2 hover:border-cyan-500/30 transition-all">
+                <div key={idx} className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2 hover:border-cyan-500/30 transition-all shadow-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider">
                       {sec.section_title}
@@ -686,7 +701,7 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
                   <div className="text-3xl font-black text-cyan-300 tracking-tight my-1">
                     {sec.key_stat}
                   </div>
-                  <div className="text-[11px] text-slate-400 italic bg-slate-900 px-2.5 py-1 rounded border border-slate-800/80">
+                  <div className="text-[11px] text-slate-400 italic bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800/80">
                     📐 Layout Directive: {sec.visual_layout_directive}
                   </div>
                   <p className="text-xs text-slate-300 leading-relaxed pt-1">{sec.supporting_text}</p>
@@ -695,7 +710,7 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
             </div>
 
             {brief.infographic?.footer_callout && (
-              <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-center text-xs text-slate-400 font-mono">
+              <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-center text-xs text-slate-400 font-mono">
                 📌 Callout: {brief.infographic.footer_callout}
               </div>
             )}
@@ -705,7 +720,7 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
         {/* 6. Executive Summary */}
         {activeTab === "exec" && (
           <div className="space-y-4">
-            <div className="p-5 rounded-xl bg-slate-950/80 border border-indigo-500/25 space-y-2">
+            <div className="p-5 rounded-2xl bg-slate-950/80 border border-indigo-500/25 space-y-2">
               <span className="text-[10px] text-indigo-400 uppercase font-mono font-bold tracking-wider">
                 Executive Briefing
               </span>
@@ -714,7 +729,7 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
+              <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
                   <Check className="h-4 w-4" /> Key Analytical Findings
                 </h4>
@@ -728,7 +743,7 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
                 </ul>
               </div>
 
-              <div className="p-5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
+              <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
                   <ArrowRight className="h-4 w-4" /> Strategic Recommendations
                 </h4>
@@ -755,10 +770,10 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
               {brief.presentation_outline.map((slide) => (
-                <div key={slide.slide_number} className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col justify-between hover:border-orange-500/30 transition-all shadow-sm">
+                <div key={slide.slide_number} className="p-4 sm:p-5 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-col justify-between hover:border-orange-500/30 transition-all shadow-sm">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20 font-bold">
+                      <span className="text-[10px] font-mono uppercase px-2.5 py-0.5 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20 font-bold">
                         Slide {slide.slide_number}
                       </span>
                       <span className="text-[10px] text-slate-500 font-mono">16:9 HD</span>
@@ -774,7 +789,7 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
                     </ul>
                   </div>
                   {slide.speaker_notes && (
-                    <div className="pt-2.5 border-t border-slate-800/80 text-[10px] text-slate-400 italic bg-slate-900/60 p-2 rounded">
+                    <div className="pt-2.5 border-t border-slate-800/80 text-[10px] text-slate-400 italic bg-slate-900/60 p-2.5 rounded-xl">
                       <strong className="text-orange-300 not-italic">Speaker Notes:</strong> {slide.speaker_notes}
                     </div>
                   )}
@@ -793,10 +808,10 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
                 onClick={copyJson}
                 className="text-xs text-blue-400 hover:text-blue-300 font-medium"
               >
-                {copiedJson ? "Copied" : "Copy to Clipboard"}
+                Copy to Clipboard
               </button>
             </div>
-            <pre className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-blue-300 overflow-x-auto max-h-96 leading-relaxed">
+            <pre className="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-blue-300 overflow-x-auto max-h-96 leading-relaxed">
               {JSON.stringify(brief, null, 2)}
             </pre>
           </div>
@@ -809,7 +824,7 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-bold text-white uppercase tracking-wider">Choose Deliverables to Synthesize</h3>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 font-mono font-semibold border border-blue-500/30">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 font-mono font-semibold border border-blue-500/30">
                 {selectedFormats.length} of 7 Selected
               </span>
             </div>
@@ -821,13 +836,13 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={selectAll}
-              className="text-xs px-2.5 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-medium border border-blue-500/20 transition-colors"
+              className="text-xs px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-semibold border border-blue-500/20 transition-colors"
             >
               Select All 7 Formats
             </button>
             <button
               onClick={deselectAll}
-              className="text-xs px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors"
+              className="text-xs px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors"
             >
               Clear
             </button>
@@ -844,16 +859,16 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
               <div
                 key={spec.id}
                 onClick={() => toggleFormat(spec.id)}
-                className={`p-3.5 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
+                className={`p-4 rounded-2xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
                   isChecked
-                    ? `${spec.accentBg} ${spec.accentBorder} shadow-md ring-1 ring-white/10`
+                    ? `${spec.accentBg} ${spec.accentBorder} shadow-lg ring-1 ring-white/10 scale-[1.01]`
                     : "bg-slate-950/50 border-slate-800 opacity-60 hover:opacity-90 hover:border-slate-700"
                 }`}
               >
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className={`h-7 w-7 rounded-lg ${spec.accentBg} ${spec.color} flex items-center justify-center border border-white/5`}>
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className={`h-8 w-8 rounded-xl ${spec.accentBg} ${spec.color} flex items-center justify-center border border-white/5 shadow-inner`}>
                         <Icon className="h-4 w-4" />
                       </div>
                       <span className="text-xs font-bold text-white">{spec.title}</span>
@@ -863,15 +878,15 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => {}}
-                      className="rounded border-slate-700 bg-slate-900 text-blue-500 focus:ring-0 h-4 w-4"
+                      className="rounded-md border-slate-700 bg-slate-900 text-blue-500 focus:ring-0 h-4 w-4"
                     />
                   </div>
 
                   <p className="text-[11px] text-slate-300 font-medium">{spec.subtitle}</p>
-                  <p className="text-[10px] text-slate-400 font-mono mt-1 leading-snug">{spec.badge}</p>
+                  <p className="text-[10px] text-slate-400 font-mono mt-1.5 leading-snug">{spec.badge}</p>
                 </div>
 
-                <div className="pt-2.5 mt-2 border-t border-slate-800/60 flex items-center justify-between">
+                <div className="pt-2.5 mt-3 border-t border-slate-800/60 flex items-center justify-between">
                   <span className={`text-[10px] font-semibold ${isChecked ? spec.color : "text-slate-500"}`}>
                     {isChecked ? "✓ Ready to Synthesize" : "Not Selected"}
                   </span>
@@ -902,9 +917,9 @@ export const ContentBriefInspector: React.FC<ContentBriefInspectorProps> = ({
           <button
             onClick={() => onTransform(brief, selectedFormats)}
             disabled={isTransforming || selectedFormats.length === 0}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-semibold text-xs shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-bold text-xs shadow-xl shadow-emerald-500/25 transition-all shimmer-btn disabled:opacity-50 disabled:cursor-not-allowed group"
           >
-            <Zap className="h-4 w-4" />
+            <Zap className="h-4 w-4 group-hover:scale-110 transition-transform" />
             <span>
               {isTransforming
                 ? "Synthesizing Deliverables in Parallel..."
